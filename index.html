@@ -74,25 +74,51 @@
         resize();
 
         playButton.addEventListener('click', () => {
-            audio.play();
+            audio.play().catch(e => console.warn(e));
             playButton.style.display = 'none';
             initVisualizer();
         });
 
         function initVisualizer() {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const source = audioCtx.createMediaElementSource(audio);
-            const analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 256;
+            let audioCtx, source, analyser;
+            let fallbackPhase = 0;
+            let fallbackSpeed = 0.05;
+            let fallback = false;
+            const fallbackDelay = 1000; // 5000 мс = 5 секунд
+            let silentStart = null;
 
-            source.connect(analyser);
-            analyser.connect(audioCtx.destination);
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                source = audioCtx.createMediaElementSource(audio);
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+                analyser.connect(audioCtx.destination);
+            } catch (e) {
+                console.warn('Web Audio API не поддерживается, fallback сразу включен');
+                analyser = null;
+                fallback = true;
+            }
 
-            const bufferLength = analyser.frequencyBinCount;
+            const bufferLength = analyser ? analyser.frequencyBinCount : 64;
             const dataArray = new Uint8Array(bufferLength);
 
             function animate() {
-                analyser.getByteFrequencyData(dataArray);
+                if (analyser) {
+                    analyser.getByteFrequencyData(dataArray);
+                    const avg = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
+
+                    if (avg < 5) {
+                        if (!silentStart) {
+                            silentStart = Date.now();
+                        } else if (Date.now() - silentStart >= fallbackDelay) {
+                            fallback = true;
+                        }
+                    } else {
+                        silentStart = null;
+                        fallback = false;
+                    }
+                }
 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
                 ctx.fillRect(0, 0, w, h);
@@ -101,15 +127,22 @@
                 let x = 0;
 
                 for (let i = 0; i < bufferLength; i++) {
-                    const barHeight = dataArray[i] / 255 * h * 0.5;
-                    const hue = i / bufferLength * 360;
+                    let barHeight;
 
+                    if (fallback || !analyser) {
+                        barHeight = (Math.sin(fallbackPhase + i * 0.2) * 0.5 + 0.5) * h * 0.4;
+                    } else {
+                        barHeight = dataArray[i] / 255 * h * 0.5;
+                    }
+
+                    const hue = i / bufferLength * 360;
                     ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
                     ctx.fillRect(x, h - barHeight, barWidth, barHeight);
 
                     x += barWidth + 1;
                 }
 
+                fallbackPhase += fallbackSpeed;
                 requestAnimationFrame(animate);
             }
             animate();
