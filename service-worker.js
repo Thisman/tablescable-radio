@@ -1,10 +1,10 @@
-const CACHE_NAME = 'tablescable-v1';
+const CACHE_NAME = 'tablescable-v2';
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
+  '/web-app-manifest-192x192.png',
+  '/web-app-manifest-512x512.png',
   // Добавь пути к css/js/audio если нужно
 ];
 
