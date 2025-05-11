@@ -1,11 +1,6 @@
 {
   "name": "Tablescable Radio",
   "short_name": "Radio",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#ff4081",
-  "orientation": "portrait",
   "icons": [
     {
       "src": "/favicon.icon/web-app-manifest-192x192.png",
@@ -19,5 +14,8 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone"
 }
