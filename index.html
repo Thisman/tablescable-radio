@@ -32,7 +32,7 @@
         }
         .content {
             position: absolute;
-            top: 50%; left: 50%;
+            top: 45%; left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
             z-index: 1;
@@ -52,6 +52,25 @@
         }
         .logo {
             border-radius: 50%;
+        }
+        .marquee-container {
+            padding: 15px 0;
+            margin-bottom: 25px;
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            color: #fff;
+        }
+
+        .marquee-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 15s linear infinite;
+        }
+
+        @keyframes marquee {
+            from { transform: translateX(0); }
+            to { transform: translateX(-100%); }
         }
         @media (max-width: 600px) {
             .btn {
@@ -85,6 +104,9 @@
     <div class="content">
         <img src="web-app-manifest-512x512.png" class="logo" height="60" width="60" />
         <h1>Tablescable Radio</h1>
+        <div class="marquee-container">
+            <div class="marquee-text" id="description">Тишина...</div>
+        </div>
         <button class="btn" id="playButton">Слушать Радио</button>
         <button class="btn" id="stopButton">Остановить</button>
     </div>
@@ -94,8 +116,10 @@
         const audio = document.getElementById('audio');
         const playButton = document.getElementById('playButton');
         const stopButton = document.getElementById('stopButton');
+        const descriptionBlock = document.getElementById('description');
         const canvas = document.getElementById('visualizer');
         const ctx = canvas.getContext('2d');
+        let descriptionUpdateTimer;
         let w, h;
 
         let visualizerCtx = null;
@@ -118,6 +142,7 @@
             playButton.style.display = 'none';
             stopButton.style.display = 'inline-block';
             initVisualizer();
+            showDescription();
         });
 
         stopButton.addEventListener('click', () => {
@@ -125,6 +150,7 @@
             stopButton.style.display = 'none';
             playButton.style.display = 'inline-block';
             stopVisualizer();
+            hideDescription();
         });
 
         function initVisualizer() {
@@ -196,6 +222,21 @@
                 visualizerFrameId = null;
             }
             ctx.clearRect(0, 0, w, h);
+        }
+    
+        function showDescription() {
+            fetch("https://tablescable-radio.ru/description.txt")
+            .then(res => res.text())
+            .then(data => {
+                descriptionBlock.innerText = data;
+            });
+
+            descriptionUpdateTimer = setTimeout(showDescription, 30000);
+        }
+
+        function hideDescription() {
+            clearInterval(descriptionUpdateTimer);
+            descriptionBlock.innerText = 'Тишина...';
         }
     </script>
     <script>
