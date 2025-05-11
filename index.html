@@ -106,7 +106,7 @@
         <img src="web-app-manifest-512x512.png" class="logo" height="60" width="60" />
         <h1>Tablescable Radio</h1>
         <div class="marquee-container">
-            <div class="marquee-text" id="description">Тишина...</div>
+            <div class="marquee-text" id="description">Сейчас: zZZ</div>
         </div>
         <button class="btn" id="playButton">Слушать Радио</button>
         <button class="btn" id="stopButton">Остановить</button>
@@ -237,7 +237,7 @@
 
         function hideDescription() {
             clearInterval(descriptionUpdateTimer);
-            descriptionBlock.innerText = 'Тишина...';
+            descriptionBlock.innerText = 'Сейчас: zZZ';
         }
     </script>
     <script>
