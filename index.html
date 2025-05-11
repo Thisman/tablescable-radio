@@ -61,15 +61,12 @@
             white-space: nowrap;
             color: #fff;
         }
-
         .marquee-text {
             display: inline-block;
-            padding-left: 100%;
+            max-width: 250px;
             font-size: 22px;
             font-style: italic;
-            animation: marquee 15s linear infinite;
         }
-
         @keyframes marquee {
             from { transform: translateX(0); }
             to { transform: translateX(-100%); }
@@ -78,6 +75,12 @@
             .btn {
                 font-size: 1em;
                 padding: 10px 20px;
+            }
+        }
+        @media (min-width: 600px) {
+            .marquee-text {
+                padding-left: 100%;
+                animation: marquee 15s linear infinite;
             }
         }
         audio {
