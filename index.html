@@ -57,15 +57,17 @@
             padding: 15px 0;
             margin-bottom: 25px;
             width: 100%;
+            max-width: 250px;
             overflow: hidden;
             white-space: nowrap;
             color: #fff;
         }
         .marquee-text {
             display: inline-block;
-            max-width: 250px;
             font-size: 22px;
             font-style: italic;
+            padding-left: 100%;
+            animation: marquee 15s linear infinite;
         }
         @keyframes marquee {
             from { transform: translateX(0); }
@@ -75,12 +77,6 @@
             .btn {
                 font-size: 1em;
                 padding: 10px 20px;
-            }
-        }
-        @media (min-width: 600px) {
-            .marquee-text {
-                padding-left: 100%;
-                animation: marquee 15s linear infinite;
             }
         }
         audio {
@@ -137,7 +133,7 @@
 
         function resize() {
             w = canvas.width = window.innerWidth;
-            h = canvas.height = window.innerHeight / 3;
+            h = canvas.height = window.innerHeight / 5;
         }
         window.addEventListener('resize', resize);
         resize();
