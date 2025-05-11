@@ -89,6 +89,12 @@
         const ctx = canvas.getContext('2d');
         let w, h;
 
+        let visualizerCtx = null;
+        let visualizerSource = null;
+        let visualizerAnalyser = null;
+        let visualizerFrameId = null;
+        let visualizerInitialized = false;
+
         stopButton.style.display = 'none';
 
         function resize() {
@@ -109,47 +115,39 @@
             audio.pause();
             stopButton.style.display = 'none';
             playButton.style.display = 'inline-block';
+            stopVisualizer();
         });
 
         function initVisualizer() {
-            let audioCtx, source, analyser;
-            let fallbackPhase = 0;
-            let fallbackSpeed = 0.05;
-            let fallback = false;
-            const fallbackDelay = 1000; // 5000 мс = 5 секунд
-            let silentStart = null;
+            if (!visualizerInitialized) {
+                visualizerCtx = new (window.AudioContext || window.webkitAudioContext)();
+                visualizerSource = visualizerCtx.createMediaElementSource(audio);
+                visualizerAnalyser = visualizerCtx.createAnalyser();
+                visualizerAnalyser.fftSize = 256;
 
-            try {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                source = audioCtx.createMediaElementSource(audio);
-                analyser = audioCtx.createAnalyser();
-                analyser.fftSize = 256;
-                source.connect(analyser);
-                analyser.connect(audioCtx.destination);
-            } catch (e) {
-                console.warn('Web Audio API не поддерживается, fallback сразу включен');
-                analyser = null;
-                fallback = true;
+                visualizerSource.connect(visualizerAnalyser);
+                visualizerAnalyser.connect(visualizerCtx.destination);
+                visualizerInitialized = true;
             }
 
-            const bufferLength = analyser ? analyser.frequencyBinCount : 64;
+            const bufferLength = visualizerAnalyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
+            let fallback = false;
+            let fallbackPhase = 0;
+            const fallbackSpeed = 0.05;
+            const fallbackDelay = 3000;
+            let silentStart = null;
 
             function animate() {
-                if (analyser) {
-                    analyser.getByteFrequencyData(dataArray);
-                    const avg = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
+                visualizerAnalyser.getByteFrequencyData(dataArray);
+                const avg = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
 
-                    if (avg < 5) {
-                        if (!silentStart) {
-                            silentStart = Date.now();
-                        } else if (Date.now() - silentStart >= fallbackDelay) {
-                            fallback = true;
-                        }
-                    } else {
-                        silentStart = null;
-                        fallback = false;
-                    }
+                if (avg < 5) {
+                    if (!silentStart) silentStart = Date.now();
+                    else if (Date.now() - silentStart >= fallbackDelay) fallback = true;
+                } else {
+                    silentStart = null;
+                    fallback = false;
                 }
 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
@@ -161,17 +159,11 @@
                 for (let i = 0; i < bufferLength; i++) {
                     let barHeight;
 
-                    if (fallback || !analyser) {
-                        // barHeight = (Math.sin(fallbackPhase + i * 0.2) * 0.5 + 0.5) * h * 0.4;
+                    if (fallback) {
                         barHeight = (
                             (Math.sin(fallbackPhase + i * 0.2) +
-                            Math.sin(fallbackPhase * 1.5 + i * 0.5)) * 0.25 + 0.5
+                                Math.sin(fallbackPhase * 1.5 + i * 0.5)) * 0.25 + 0.5
                         ) * h * 0.4;
-                        // barHeight = (Math.abs(((fallbackPhase + i * 0.2) % (2 * Math.PI)) - Math.PI) / Math.PI) * h * 0.4;
-                        // barHeight = ((fallbackPhase + i * 0.2) % (2 * Math.PI)) / (2 * Math.PI) * h * 0.4;
-                        // if (Math.random() < 0.05) {
-                        //     barHeight = Math.random() * h * 0.4;
-                        // }
                     } else {
                         barHeight = dataArray[i] / 255 * h * 0.5;
                     }
@@ -179,14 +171,22 @@
                     const hue = i / bufferLength * 360;
                     ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
                     ctx.fillRect(x, h - barHeight, barWidth, barHeight);
-
                     x += barWidth + 1;
                 }
 
                 fallbackPhase += fallbackSpeed;
-                requestAnimationFrame(animate);
+                visualizerFrameId = requestAnimationFrame(animate);
             }
+
             animate();
+        }
+
+        function stopVisualizer() {
+            if (visualizerFrameId) {
+                cancelAnimationFrame(visualizerFrameId);
+                visualizerFrameId = null;
+            }
+            ctx.clearRect(0, 0, w, h);
         }
     </script>
     <script>
