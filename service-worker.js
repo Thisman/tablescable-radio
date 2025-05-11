@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tablescable-v2';
+const CACHE_NAME = 'tablescable-v3';
 const urlsToCache = [
   '/',
   '/index.html',
